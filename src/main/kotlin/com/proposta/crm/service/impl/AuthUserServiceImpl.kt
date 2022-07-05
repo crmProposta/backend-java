@@ -3,7 +3,9 @@ package com.proposta.crm.service.impl
 import com.proposta.crm.dto.JwtTokensDTO
 import com.proposta.crm.dto.LoginDTO
 import com.proposta.crm.entity.AuthUser
+import com.proposta.crm.entity.Role
 import com.proposta.crm.exception.IncorrectCredentialsException
+import com.proposta.crm.model.RoleEnum
 import com.proposta.crm.repository.AuthUserRepository
 import com.proposta.crm.service.AuthUserService
 import com.proposta.crm.util.Constants
@@ -13,7 +15,6 @@ import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
@@ -29,15 +30,16 @@ class AuthUserServiceImpl : AuthUserService{
     @Autowired
     private lateinit  var authenticationManager: AuthenticationManager
 
-    private final val bCryptPasswordEncoder: PasswordEncoder = BCryptPasswordEncoder()
+    @Autowired
+    private lateinit var bCryptPasswordEncoder: PasswordEncoder
 
     override fun registerUser(loginDTO: LoginDTO) {
         if (loginDTO.password.length !in 8..25)
             throw IncorrectCredentialsException("password must be greater than 8 and shorter than 25")
 
         val passwordEncoded = bCryptPasswordEncoder.encode(loginDTO.password)
-        val user = AuthUser(null, loginDTO.loginLabel, passwordEncoded)
-        authUserRepository.save(user);
+        val user = AuthUser(null, loginDTO.loginLabel, passwordEncoded, roles = setOf(Role(RoleEnum.CUSTOMER)))
+        authUserRepository.save(user)
 
     }
 
@@ -64,7 +66,7 @@ class AuthUserServiceImpl : AuthUserService{
             JwtUtil.generateAccessToken(userDetails, Constants.URL),
             JwtUtil.generateRefreshToken(userDetails, Constants.URL)
         )
-        val userWithRefreshToken = user.copy(refreshToken = tokens.refreshToken);
+        val userWithRefreshToken = user.copy(refreshToken = tokens.refreshToken)
         authUserRepository.save(userWithRefreshToken)
 
         return tokens
@@ -81,7 +83,7 @@ class AuthUserServiceImpl : AuthUserService{
         )
 
         authUserRepository.save(user.copy(refreshToken = tokens.refreshToken))
-        return tokens;
+        return tokens
     }
 
     override fun deleteUser(deleteDTO: LoginDTO) {

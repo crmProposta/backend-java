@@ -18,8 +18,8 @@ class UserDetailsService : org.springframework.security.core.userdetails.UserDet
         val user = authUserRepository.findByUsername(username!!)
             ?: throw UsernameNotFoundException("user doesn't exists")
 
-        //TODO(Add authorities to DB and get here)
-        val authorities: Collection<SimpleGrantedAuthority> = mutableListOf()
+        val authorities: Collection<SimpleGrantedAuthority> =
+            user.roles.map { role -> SimpleGrantedAuthority(role.authority)}.toList()
 
         return User(username, user.password, authorities)
     }
