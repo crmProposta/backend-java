@@ -1,5 +1,6 @@
 package com.proposta.crm
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 

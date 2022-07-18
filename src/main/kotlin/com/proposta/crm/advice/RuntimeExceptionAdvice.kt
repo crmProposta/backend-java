@@ -58,7 +58,6 @@ class RuntimeExceptionAdvice {
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleHttpmessageNotReadableException(e: HttpMessageNotReadableException): ResponseEntity<Any> {
-        e.printStackTrace()
         return ResponseEntity.badRequest().body(
             ResponseHandler.Error("httpMessageNotReadable", "We can read what you send to us")
         )

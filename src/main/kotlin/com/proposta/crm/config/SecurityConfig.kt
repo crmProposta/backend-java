@@ -30,7 +30,7 @@ class SecurityConfig : WebSecurityConfigurerAdapter(){
             it.httpBasic().disable()
             it.formLogin().disable()
 
-
+            it.authorizeRequests().antMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
             it.authorizeRequests().antMatchers("/auth/**").permitAll()
             it.authorizeRequests().anyRequest().authenticated()
             it.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

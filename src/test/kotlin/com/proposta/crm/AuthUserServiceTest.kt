@@ -32,7 +32,6 @@ class AuthUserServiceTest(
     @BeforeAll
     fun `register user`() { authUserRepository.save(testUser) }
 
-    @Test
     fun `validate if user is registered`() {
 
         val user = authUserRepository.findByUsername("test")

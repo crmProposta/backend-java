@@ -2,6 +2,7 @@ package com.proposta.crm.controller
 
 import com.proposta.crm.dto.JwtTokensDTO
 import com.proposta.crm.dto.LoginDTO
+import com.proposta.crm.dto.RegisterDTO
 import com.proposta.crm.handler.ResponseHandler
 import com.proposta.crm.model.ResponseStatusEnum
 import com.proposta.crm.service.AuthUserService
@@ -39,7 +40,7 @@ class AuthController {
     }
 
     @PostMapping("/register")
-    fun register(@RequestBody registerDTO: LoginDTO): ResponseEntity<ResponseHandler<Any>> {
+    fun register(@RequestBody registerDTO: RegisterDTO): ResponseEntity<ResponseHandler<Any>> {
         userService.registerUser(registerDTO)
 
         return ResponseEntity.ok(
