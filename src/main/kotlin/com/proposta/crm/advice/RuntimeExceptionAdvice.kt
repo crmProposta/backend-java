@@ -1,5 +1,6 @@
 package com.proposta.crm.advice
 
+import com.proposta.crm.exception.ControllerException
 import com.proposta.crm.exception.IncorrectCredentialsException
 import com.proposta.crm.handler.ResponseHandler
 import org.springframework.dao.DataIntegrityViolationException
@@ -18,6 +19,14 @@ class RuntimeExceptionAdvice {
     fun handleIncorrectCredentialsException(e: IncorrectCredentialsException): ResponseEntity<Any> {
         return ResponseEntity.badRequest().body(
             ResponseHandler.Error("incorrectCredentials", e.message)
+        )
+
+    }
+
+    @ExceptionHandler(ControllerException::class)
+    fun handleIncorrectCredentialsException(e: ControllerException): ResponseEntity<Any> {
+        return ResponseEntity.badRequest().body(
+            ResponseHandler.Error(e.code, e.message)
         )
 
     }
@@ -72,6 +81,13 @@ class RuntimeExceptionAdvice {
         )
     }
 
+    @ExceptionHandler(java.lang.NullPointerException::class)
+    fun handleRuntimeException(e: java.lang.NullPointerException): ResponseEntity<Any> {
+        e.printStackTrace()
+        return ResponseEntity.internalServerError().body(
+            ResponseHandler.Error("parameter null", e.localizedMessage)
+        )
+    }
 
 
 }
