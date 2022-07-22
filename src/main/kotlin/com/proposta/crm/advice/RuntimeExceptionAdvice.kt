@@ -3,6 +3,7 @@ package com.proposta.crm.advice
 import com.proposta.crm.exception.ControllerException
 import com.proposta.crm.exception.IncorrectCredentialsException
 import com.proposta.crm.handler.ResponseHandler
+import org.postgresql.util.PSQLException
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -10,6 +11,7 @@ import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import javax.validation.ConstraintViolation
 import javax.validation.ConstraintViolationException
 
 @RestControllerAdvice
@@ -60,8 +62,16 @@ class RuntimeExceptionAdvice {
 
     @ExceptionHandler(DataIntegrityViolationException::class)
     fun handleDataIntegrityViolationException(e: DataIntegrityViolationException): ResponseEntity<Any> {
-        return ResponseEntity.ok().body(
-            ResponseHandler.Error("constraintViolations", "constraint error")
+        var message = "Constraint violation error"
+        val exception = e.mostSpecificCause
+        if (exception is PSQLException ) {
+            exception.serverErrorMessage.let {
+                message = it!!.detail.toString()
+            }
+        }
+
+        return ResponseEntity.badRequest().body(
+            ResponseHandler.Error("constraintError", message)
         )
     }
 
