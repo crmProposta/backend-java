@@ -1,9 +1,6 @@
 package com.proposta.crm.service.impl
 
-import com.proposta.crm.dto.CreateAccountByMasterDTO
-import com.proposta.crm.dto.JwtTokensDTO
-import com.proposta.crm.dto.LoginDTO
-import com.proposta.crm.dto.RegisterDTO
+import com.proposta.crm.dto.*
 import com.proposta.crm.entity.AuthUser
 import com.proposta.crm.entity.Role
 import com.proposta.crm.exception.ControllerException
@@ -13,6 +10,7 @@ import com.proposta.crm.service.AuthManagerService
 import com.proposta.crm.service.AuthUserService
 import com.proposta.crm.service.RoleService
 import com.proposta.crm.util.JwtUtil
+import com.proposta.crm.util.RoleUtil
 import com.proposta.crm.validator.AuthUserValidator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -109,6 +107,15 @@ class AuthUserServiceImpl : AuthUserService {
         user.enabled = false
         authUserRepository.save(user)
     }
+
+    override fun listAccountByMasterAccount(): List<UserDTO> {
+        val roles = authUserRepository.findAll().map { user ->
+            UserDTO(user.id, user.username, user.enabled, RoleUtil.roleRepositoryToRoleEnum(user.roles)) }.toList()
+
+        return roles
+    }
+
+
 
 
 }

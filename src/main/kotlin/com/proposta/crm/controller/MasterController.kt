@@ -1,12 +1,14 @@
 package com.proposta.crm.controller
 
 import com.proposta.crm.dto.CreateAccountByMasterDTO
+import com.proposta.crm.dto.UserDTO
 import com.proposta.crm.handler.ResponseHandler
 import com.proposta.crm.model.ResponseStatusEnum
 import com.proposta.crm.model.RoleEnum
 import com.proposta.crm.service.AuthUserService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -26,6 +28,16 @@ class MasterController(
 
         return ResponseEntity.ok(
             ResponseHandler.Success(ResponseStatusEnum.SUCCESS, "success", "account created succesfully")
+        )
+    }
+
+    @GetMapping("/list-account")
+    @PreAuthorize("hasRole(${RoleEnum.Code.MASTER})")
+    fun listAccount() : ResponseEntity<ResponseHandler<Any>> {
+        val accounts: List<UserDTO> = authUserService.listAccountByMasterAccount()
+        
+        return ResponseEntity.ok(
+            ResponseHandler.Success(ResponseStatusEnum.SUCCESS, codeMessage = "success", data = accounts)
         )
     }
 }
