@@ -13,4 +13,8 @@ interface AuthUserService {
     fun deleteUser(deleteDTO: LoginDTO)
     fun createAccountByMasterAccount(user: CreateAccountByMasterDTO)
     fun listAccountByMasterAccount(): List<UserDTO>
+    fun enableAccount(id: Int): Boolean
+    fun disableAccount(id: Int): Boolean
+    fun getAccountById(id: Long): UserDTO
+    fun editAccount(formUser: EditUserDTO): UserDTO
 }

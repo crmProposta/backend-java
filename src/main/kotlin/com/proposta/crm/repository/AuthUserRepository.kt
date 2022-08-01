@@ -12,4 +12,6 @@ interface AuthUserRepository : JpaRepository<AuthUser, Long> {
     fun findByUsernameAndEnabledTrue(username: String) : AuthUser?
 
     fun findByRefreshToken(refreshToken: String): AuthUser?
+
+    fun findAllByOrderByIdAsc(): List<AuthUser>
 }

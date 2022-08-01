@@ -5,6 +5,9 @@ import com.proposta.crm.entity.AuthUser
 import com.proposta.crm.entity.Role
 import com.proposta.crm.exception.ControllerException
 import com.proposta.crm.exception.IncorrectCredentialsException
+import com.proposta.crm.exception.UserNotFoundException
+import com.proposta.crm.exception.ValidationException
+import com.proposta.crm.model.RoleEnum
 import com.proposta.crm.repository.AuthUserRepository
 import com.proposta.crm.service.AuthManagerService
 import com.proposta.crm.service.AuthUserService
@@ -12,29 +15,18 @@ import com.proposta.crm.service.RoleService
 import com.proposta.crm.util.JwtUtil
 import com.proposta.crm.util.RoleUtil
 import com.proposta.crm.validator.AuthUserValidator
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
 @Service
-class AuthUserServiceImpl : AuthUserService {
-
-    @Autowired
-    private lateinit var authUserRepository: AuthUserRepository
-
-    @Autowired
-    private lateinit var userDetailsService: UserDetailsService
-
-    @Autowired
-    private lateinit var authManagerService: AuthManagerService
-
-    @Autowired
-    private lateinit var bCryptPasswordEncoder: PasswordEncoder
-
-    @Autowired
-    private lateinit var roleService: RoleService
-
+class AuthUserServiceImpl(
+    private val authUserRepository: AuthUserRepository,
+    private val userDetailsService: UserDetailsService,
+    private val authManagerService: AuthManagerService,
+    private val bCryptPasswordEncoder: PasswordEncoder,
+    private val roleService: RoleService,
+) : AuthUserService {
     override fun registerUser(registerDTO: RegisterDTO) {
         AuthUserValidator.validateRegisterParameters(registerDTO)
 
@@ -62,8 +54,8 @@ class AuthUserServiceImpl : AuthUserService {
     }
 
     override fun generateNewAccessToken(refreshToken: String): JwtTokensDTO {
-        val user = authUserRepository.findByRefreshToken(refreshToken)
-            ?: throw IncorrectCredentialsException("User not found")
+        val user =
+            authUserRepository.findByRefreshToken(refreshToken) ?: throw IncorrectCredentialsException("User not found")
 
         val userDetails = userDetailsService.loadUserByUsername(user.username)
         val tokens = JwtUtil.generateAuthTokens(user)
@@ -90,14 +82,9 @@ class AuthUserServiceImpl : AuthUserService {
         val userRoles = roleService.findRolesByRoleEnum(user.roles)
         val passwordEncoded = bCryptPasswordEncoder.encode(user.password)
 
-        if (userRoles.isEmpty()) throw ControllerException("roleEmpty","Specify at least one role for the user")
+        if (userRoles.isEmpty()) throw ControllerException("roleEmpty", "Specify at least one role for the user")
         val authUser: AuthUser = AuthUser(
-            null,
-            user.loginLabel,
-            passwordEncoded,
-            user.enabled,
-            "",
-            userRoles.toSet()
+            null, user.loginLabel, passwordEncoded, user.enabled, "", userRoles.toSet()
         )
 
         authUserRepository.save(authUser)
@@ -109,13 +96,80 @@ class AuthUserServiceImpl : AuthUserService {
     }
 
     override fun listAccountByMasterAccount(): List<UserDTO> {
-        val roles = authUserRepository.findAll().map { user ->
-            UserDTO(user.id, user.username, user.enabled, RoleUtil.roleRepositoryToRoleEnum(user.roles)) }.toList()
+        val roles = authUserRepository.findAllByOrderByIdAsc().map { user ->
+            UserDTO(user.id, user.username, user.enabled, RoleUtil.roleRepositoryToRoleEnum(user.roles))
+        }.toList()
 
         return roles
     }
 
+    override fun enableAccount(id: Int): Boolean {
+        val authUser = authUserRepository.findById(id.toLong()).orElseThrow { UserNotFoundException("user not found") }
 
+        if (RoleUtil.roleRepositoryToRoleEnum(authUser.roles)
+                .contains(RoleEnum.MASTER)
+        ) throw ValidationException("cannot disable master's user")
+        if (authUser.enabled) throw ValidationException("user already enabled")
+
+        authUser.enabled = true;
+
+        authUserRepository.save(authUser)
+
+        return true;
+    }
+
+    override fun disableAccount(id: Int): Boolean {
+        val authUser = authUserRepository.findById(id.toLong()).orElseThrow { UserNotFoundException("user not found") }
+
+        if (RoleUtil.roleRepositoryToRoleEnum(authUser.roles)
+                .contains(RoleEnum.MASTER)
+        ) throw ValidationException("cannot disable master's user")
+        if (!authUser.enabled) throw ValidationException("user already disabled")
+
+        authUser.enabled = false;
+
+        authUserRepository.save(authUser)
+
+        return true;
+    }
+
+    override fun getAccountById(id: Long): UserDTO {
+        val account = authUserRepository.findById(id).orElseThrow { UserNotFoundException("ID not valid") }
+
+        return UserDTO(
+            account.id,
+            account.username,
+            account.enabled,
+            RoleUtil.roleRepositoryToRoleEnum(account.roles)
+        )
+    }
+
+    override fun editAccount(formUser: EditUserDTO): UserDTO {
+        val account: AuthUser =
+            authUserRepository.findById(formUser.id).orElseThrow { UserNotFoundException("ID not valid") }
+
+        AuthUserValidator.validateEditParameters(formUser)
+
+        val accountEdited = account.copy(
+            username = formUser.loginLabel,
+            password = getOldOrNewPassword(account, formUser.isToChangePassword, formUser.newPassword),
+            enabled = formUser.enabled,
+            roles = roleService.findRolesByRoleEnum(formUser.roles).toSet()
+        )
+
+        authUserRepository.save(accountEdited)
+        return UserDTO(
+            accountEdited.id,
+            accountEdited.username,
+            accountEdited.enabled,
+            RoleUtil.roleRepositoryToRoleEnum(accountEdited.roles)
+        )
+    }
+
+    private fun getOldOrNewPassword(account: AuthUser, isToChangePassword: Boolean, newPassword: String?): String {
+        return if (isToChangePassword && (newPassword != null))
+            bCryptPasswordEncoder.encode(newPassword) else account.password
+    }
 
 
 }
