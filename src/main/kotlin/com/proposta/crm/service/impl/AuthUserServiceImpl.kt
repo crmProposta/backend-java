@@ -148,11 +148,15 @@ class AuthUserServiceImpl(
         val account: AuthUser =
             authUserRepository.findById(formUser.id).orElseThrow { UserNotFoundException("ID not valid") }
 
+        if (RoleUtil.roleRepositoryToRoleEnum(account.roles)
+                .contains(RoleEnum.MASTER)
+        ) throw ValidationException("cannot edit master's user")
+
         AuthUserValidator.validateEditParameters(formUser)
 
         val accountEdited = account.copy(
             username = formUser.loginLabel,
-            password = getOldOrNewPassword(account, formUser.isToChangePassword, formUser.newPassword),
+            password = getOldOrNewPassword(account, formUser.isToChangePassword, formUser.password),
             enabled = formUser.enabled,
             roles = roleService.findRolesByRoleEnum(formUser.roles).toSet()
         )

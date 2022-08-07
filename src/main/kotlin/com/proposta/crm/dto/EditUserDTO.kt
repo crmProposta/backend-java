@@ -9,7 +9,7 @@ data class EditUserDTO(
     val id: Long,
     @NotNull
     val loginLabel: String,
-    val newPassword: String?,
+    val password: String?,
     val isToChangePassword: Boolean,
     val enabled: Boolean = false,
     @NotEmpty

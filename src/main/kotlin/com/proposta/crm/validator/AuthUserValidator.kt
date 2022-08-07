@@ -1,7 +1,6 @@
 package com.proposta.crm.validator
 
 import com.proposta.crm.dto.EditUserDTO
-import com.proposta.crm.dto.LoginDTO
 import com.proposta.crm.dto.RegisterDTO
 import com.proposta.crm.entity.AuthUser
 import com.proposta.crm.exception.IncorrectCredentialsException
@@ -22,8 +21,8 @@ object AuthUserValidator {
 
     fun validateEditParameters(editUserDTO: EditUserDTO) {
         if (editUserDTO.isToChangePassword &&
-            !editUserDTO.newPassword.isNullOrBlank() &&
-            editUserDTO.newPassword.length !in 8..25
+            !editUserDTO.password.isNullOrBlank() &&
+            editUserDTO.password.length !in 8..25
         )
             throw IncorrectCredentialsException("password must be greater than 8 and shorter than 25")
 
