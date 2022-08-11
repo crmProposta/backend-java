@@ -10,6 +10,7 @@ class TestController {
 
     @PostMapping
     fun test(): String {
+        val pt =
         return "test"
     }
 }
