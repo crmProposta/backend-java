@@ -60,7 +60,7 @@ class TokenAuthorizationFilter(private val userDetailsService: UserDetailsServic
         response.contentType = APPLICATION_JSON_VALUE
         ObjectMapper().writeValue(
             response.outputStream,
-            ResponseHandler.Error("", errorMessage)
+            ResponseHandler.Error("tokenError", errorMessage)
         )
     }
 

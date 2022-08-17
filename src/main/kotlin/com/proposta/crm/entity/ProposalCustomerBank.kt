@@ -1,23 +1,19 @@
 package com.proposta.crm.entity
 
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.Id
-import javax.persistence.JoinColumn
-import javax.persistence.MapsId
-import javax.persistence.OneToOne
-import javax.persistence.Table
+import javax.persistence.*
 
 @Entity
 @Table
 data class ProposalCustomerBank(
-    @Id
-    @Column(name = "proposal_id")
-    val proposalId: Long,
+    @Id @Column(name = "proposal_id")
+    val id: Long?,
+    @MapsId
+    @OneToOne(mappedBy = "customerBank", fetch = FetchType.LAZY)
+    @JoinColumn(name = "proposal_id")
+    val proposal: Proposal,
     val accountNumber: String,
     val bankName: String,
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "proposal_id")
-    val proposal: Proposal
-)
+) {
+    constructor(proposal: Proposal, accountNumber: String, bankName: String) :
+                this(id = null, proposal, accountNumber, bankName)
+}

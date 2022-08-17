@@ -34,10 +34,5 @@ data class AuthUser(
     )
     val roles: Set<Role>,
 
-    @OneToMany(mappedBy = "registeredByUser")
-    val registeredProposals: List<Proposal> = emptyList(),
-
-    @OneToMany(mappedBy = "userSeller")
-    val proposalsAsUserSeller: List<Proposal> = emptyList(),
 
     )

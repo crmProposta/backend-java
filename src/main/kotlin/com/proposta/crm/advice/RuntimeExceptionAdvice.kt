@@ -1,5 +1,6 @@
 package com.proposta.crm.advice
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import com.proposta.crm.exception.ControllerException
 import com.proposta.crm.exception.IncorrectCredentialsException
 import com.proposta.crm.handler.ResponseHandler
@@ -11,6 +12,7 @@ import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import javax.persistence.EntityNotFoundException
 import javax.validation.ConstraintViolationException
 
 @RestControllerAdvice
@@ -74,16 +76,45 @@ class RuntimeExceptionAdvice {
         )
     }
 
+
+    @ExceptionHandler(InvalidFormatException::class)
+    fun handleInvalidFormatException(e: InvalidFormatException): ResponseEntity<Any> {
+        var message: String = e.localizedMessage.substringBefore("at [Source")
+        if (e.targetType.simpleName == "Date") {
+            message = "date needs to be a yyyy-mm-dd format in ${e.path[e.path.size-1].fieldName}"
+        }
+        return ResponseEntity.badRequest().body(
+            ResponseHandler.Error("invalidFormat", message)
+        )
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException::class)
-    fun handleHttpmessageNotReadableException(e: HttpMessageNotReadableException): ResponseEntity<Any> {
+    fun handleHttpMessageNotReadableException(e: HttpMessageNotReadableException): ResponseEntity<Any> {
+        e.cause?.let {
+            if (e.cause is InvalidFormatException)
+                return handleInvalidFormatException(e.cause as InvalidFormatException)
+        }
         return ResponseEntity.badRequest().body(
             ResponseHandler.Error("httpMessageNotReadable", "We can read what you send to us")
+        )
+    }
+
+    @ExceptionHandler(EntityNotFoundException::class)
+    fun handleEntityNotFoundException(e: EntityNotFoundException): ResponseEntity<Any> {
+        var message = e.message?.replace("com.proposta.crm.entity.", "") ?: ""
+        message = message.replace("AuthUser", "user")
+        return ResponseEntity.badRequest().body(
+            ResponseHandler.Error("userNotFound", message)
         )
     }
 
 
     @ExceptionHandler(RuntimeException::class)
     fun handleRuntimeException(e: RuntimeException): ResponseEntity<Any> {
+        e.cause?.let {
+            if (e.cause is EntityNotFoundException)
+                return handleEntityNotFoundException(e.cause as EntityNotFoundException)
+        }
         e.printStackTrace()
         return ResponseEntity.internalServerError().body(
             ResponseHandler.Error("internalServerError", e.localizedMessage)
@@ -92,11 +123,11 @@ class RuntimeExceptionAdvice {
 
     @ExceptionHandler(java.lang.NullPointerException::class)
     fun handleRuntimeException(e: java.lang.NullPointerException): ResponseEntity<Any> {
-        e.printStackTrace()
         return ResponseEntity.internalServerError().body(
             ResponseHandler.Error("parameter null", e.localizedMessage)
         )
     }
+
 
 
 }

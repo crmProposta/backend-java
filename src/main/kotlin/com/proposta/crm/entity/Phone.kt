@@ -6,11 +6,12 @@ import javax.persistence.*
 @Table
 data class Phone(
     @Id
-    @Column(name = "id", insertable = false, updatable = false)
-    val id: Long,
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long?,
     val phoneNumber: String,
 
     @ManyToOne
-    val customer: ProposalCustomer
+    @JoinColumn(name = "customer_id", nullable = false)
+    val customer: ProposalCustomer?
 
 )

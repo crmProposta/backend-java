@@ -7,31 +7,33 @@ import com.proposta.crm.entity.enums.ProposalType
 import com.proposta.crm.entity.enums.SaleSource
 import com.proposta.crm.entity.converter.ProposalTypeConverter
 import com.proposta.crm.entity.converter.SaleSourceConverter
+import org.hibernate.annotations.Fetch
 import javax.persistence.*
+import javax.validation.Valid
 
 @Entity
 @Table
 data class Proposal(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long,
+    val id: Long?,
     @ManyToOne
-    @JoinColumn(name="proposal_customer_id", nullable = false)
+    @JoinColumn(name = "proposal_customer_id", nullable = false)
     val customer: ProposalCustomer,
 
     @EnumWIthConverter(ProposalTypeConverter::class)
     val proposalType: ProposalType,
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "registered_user_id", nullable = false)
     val registeredByUser: AuthUser,
-    @ManyToOne
-    @JoinColumn(name =  "seller_user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_user_id", nullable = false)
     val userSeller: AuthUser,
 
-    @OneToOne(mappedBy = "proposal", cascade = [CascadeType.ALL])
+    @OneToOne
     @PrimaryKeyJoinColumn
-    val customerBank: ProposalCustomerBank,
+    val customerBank: ProposalCustomerBank? = null,
     @Enumerated(EnumType.STRING)
     val transactionMediatorBank: ProposalMediatorBank,
     @Enumerated(EnumType.STRING)
@@ -41,4 +43,27 @@ data class Proposal(
     val saleSource: SaleSource,
 
     val proposalNumber: String,
-)
+) {
+    constructor(
+        id: Long? = null,
+        customer: ProposalCustomer,
+        proposalType: ProposalType,
+        registeredByUser: AuthUser,
+        userSeller: AuthUser,
+        transactionMediatorBank: ProposalMediatorBank,
+        promoter: ProposalPromoter,
+        saleSource: SaleSource,
+        proposalNumber: String
+    ) : this(
+        id,
+        customer,
+        proposalType,
+        registeredByUser,
+        userSeller,
+        null,
+        transactionMediatorBank,
+        promoter,
+        saleSource,
+        proposalNumber
+    )
+}
